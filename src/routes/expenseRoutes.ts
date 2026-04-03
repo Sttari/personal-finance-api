@@ -8,14 +8,16 @@ import {
 } from "../controllers/expenseController";
 import { validate } from "../middleware/validate";
 import { createExpenseSchema, updateExpenseSchema } from "../types/expense";
-
+import { authenticate } from "../middleware/auth";
 
 const router = Router();
+
+router.use(authenticate);
 
 router.get("/", getAllExpenses);
 router.get("/:id", getExpenseById);
 router.post("/", validate(createExpenseSchema), createExpense);
-router.put("/:id", validate(updateExpenseSchema),  updateExpense);
+router.put("/:id", validate(updateExpenseSchema), updateExpense);
 router.delete("/:id", deleteExpense);
 
 export default router;

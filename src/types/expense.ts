@@ -1,11 +1,3 @@
-// export interface Expense {
-//   id: string;
-//   amount: number;
-//   category: string;
-//   description: string;
-//   date: string;
-//   createdAt: string;
-// }
 import { z } from "zod";
 
 export const createExpenseSchema = z.object({
