@@ -64,3 +64,7 @@ export const deleteExpense = (req: Request, res: Response): void => {
   const deleted = expenses.splice(index, 1)[0];
   res.json({ message: "Expense deleted", expense: deleted });
 };
+
+export const getExpenses = (): Expense[] => {
+  return expenses;
+};
