@@ -1,9 +1,7 @@
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { User } from "../types/user";
-
-const users: User[] = [];
+import prisma from "../db";
 
 const JWT_SECRET = process.env.JWT_SECRET as string;
 const TOKEN_EXPIRY = "24h";
@@ -11,7 +9,7 @@ const TOKEN_EXPIRY = "24h";
 export const register = async (req: Request, res: Response): Promise<void> => {
   const { email, password, name } = req.body;
 
-  const existingUser = users.find((u) => u.email === email);
+  const existingUser = await prisma.user.findUnique({ where: { email } });
   if (existingUser) {
     res.status(409).json({ error: "Email already registered" });
     return;
@@ -20,15 +18,13 @@ export const register = async (req: Request, res: Response): Promise<void> => {
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
 
-  const newUser: User = {
-    id: crypto.randomUUID(),
-    email,
-    password: hashedPassword,
-    name,
-    createdAt: new Date().toISOString(),
-  };
-
-  users.push(newUser);
+  const newUser = await prisma.user.create({
+    data: {
+      email,
+      password: hashedPassword,
+      name,
+    },
+  });
 
   const token = jwt.sign({ id: newUser.id, email: newUser.email }, JWT_SECRET, {
     expiresIn: TOKEN_EXPIRY,
@@ -44,7 +40,8 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 export const login = async (req: Request, res: Response): Promise<void> => {
   const { email, password } = req.body;
 
-  const user = users.find((u) => u.email === email);
+  const user = await prisma.user.findUnique({ where: { email } });
+  
   if (!user) {
     res.status(401).json({ error: "Invalid email or password" });
     return;

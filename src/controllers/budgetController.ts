@@ -1,60 +1,71 @@
 import { Response } from "express";
-import { Budget } from "../types/budget";
-import { Expense } from "../types/expense";
 import { AuthRequest } from "../middleware/auth";
+import prisma from "../db";
 
-const budgets: Budget[] = [];
 
-// We need access to expenses to calculate spending
-// In a real app, a database would handle this with queries
-import { getExpenses } from "./expenseController";
-
-export const getAllBudgets = (req: AuthRequest, res: Response): void => {
-  const expenses = getExpenses();
-
-  const budgetsWithSpent = budgets.map((budget) => {
-    const spent = expenses
-      .filter((e) => e.category.toLowerCase() === budget.category.toLowerCase())
-      .reduce((sum, e) => sum + e.amount, 0);
-
-    return { ...budget, spent };
+export const getAllBudgets = async (req: AuthRequest, res: Response): Promise<void> => {
+  const budgets = await prisma.budget.findMany({
+    where: { userId: req.user!.id },
   });
 
+  const budgetsWithSpent = await Promise.all(
+    budgets.map(async (budget) => {
+      const result = await prisma.expense.aggregate({
+        where: {
+          userId: req.user!.id,
+          category: { equals: budget.category, mode: "insensitive" },
+        },
+        _sum: { amount: true },
+      }); 
+
+      return { ...budget, spent: result._sum.amount || 0 };
+    })
+  );
   res.json(budgetsWithSpent);
 };
 
-export const createBudget = (req: AuthRequest, res: Response): void => {
+export const createBudget = async (req: AuthRequest, res: Response): Promise<void> => {
   const { category, limit, period } = req.body;
 
-  const existing = budgets.find(
-    (b) => b.category.toLowerCase() === category.toLowerCase()
-  );
+  const existing = await prisma.budget.findFirst({
+    where: {
+      userId: req.user!.id,
+      category: { equals: category, mode: "insensitive" },
+    },
+  });
   if (existing) {
     res.status(409).json({ error: "Budget for this category already exists" });
     return;
   }
 
-  const newBudget: Budget = {
-    id: crypto.randomUUID(),
-    category,
-    limit,
-    period,
-    spent: 0,
-    createdAt: new Date().toISOString(),
-  };
+  const newBudget = await prisma.budget.create({
+    data: {
+      category,
+      limit,
+      period,
+      userId: req.user!.id,
+    },
+  });
 
-  budgets.push(newBudget);
   res.status(201).json(newBudget);
 };
 
-export const deleteBudget = (req: AuthRequest, res: Response): void => {
-  const index = budgets.findIndex((b) => b.id === req.params.id);
-
-  if (index === -1) {
+export const deleteBudget = async (req: AuthRequest, res: Response): Promise<void> => {
+  const id = req.params.id as string;
+  const existing = await prisma.budget.findFirst({
+    where: {
+      id,
+      userId: req.user!.id,
+    },
+  });
+  if (!existing) {
     res.status(404).json({ error: "Budget not found" });
-    return;
+    return;   
   }
 
-  const deleted = budgets.splice(index, 1)[0];
+  const deleted = await prisma.budget.delete({
+    where: { id },
+  });
+
   res.json({ message: "Budget deleted", budget: deleted });
 };
