@@ -4,12 +4,16 @@ import authRoutes from "./routes/authRoutes";
 import budgetRoutes from "./routes/budgetRoutes";
 import { notFoundHandler, errorHandler } from "./middleware/errorHandler";
 
+
 const app = express();
 
 app.use(express.json());
 
 app.get("/", (req: Request, res: Response) => {
   res.json({ message: "Personal Finance API is running" });
+});
+app.get('/health', (_req, res) => {
+  res.status(200).json({ status: 'ok' });
 });
 
 app.use("/api/auth", authRoutes);
