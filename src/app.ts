@@ -5,6 +5,7 @@ import budgetRoutes from "./routes/budgetRoutes";
 import { notFoundHandler, errorHandler } from "./middleware/errorHandler";
 import { requireAuth } from "./middleware/requireAuth";
 import cors from "cors";
+import { config } from "./config";
 
 const app = express();
 
@@ -12,7 +13,7 @@ app.use(express.json());
 
 
 app.use(cors({
-  origin: "http://localhost:3001",
+  origin: config.corsOrigin.split(","),
   credentials: true,
 }));
 app.get("/", (req: Request, res: Response) => {
