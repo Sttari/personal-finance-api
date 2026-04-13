@@ -4,7 +4,7 @@ import { config } from "../config";
 
 //  Define an interface for the authenticated request, extending the Express Request
 export interface AuthRequest extends Request {
-  user?: { id: string; email: string };
+  user: { id: string; email: string };
 }
 
 // Define the shape of the JWT payload

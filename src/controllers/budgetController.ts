@@ -5,14 +5,14 @@ import prisma from "../db";
 
 export const getAllBudgets = async (req: AuthRequest, res: Response): Promise<void> => {
   const budgets = await prisma.budget.findMany({
-    where: { userId: req.user!.id },
+    where: { userId: req.user.id },
   });
 
   const budgetsWithSpent = await Promise.all(
     budgets.map(async (budget) => {
       const result = await prisma.expense.aggregate({
         where: {
-          userId: req.user!.id,
+          userId: req.user.id,
           category: { equals: budget.category, mode: "insensitive" },
         },
         _sum: { amount: true },
@@ -29,7 +29,7 @@ export const createBudget = async (req: AuthRequest, res: Response): Promise<voi
 
   const existing = await prisma.budget.findFirst({
     where: {
-      userId: req.user!.id,
+      userId: req.user.id,
       category: { equals: category, mode: "insensitive" },
     },
   });
@@ -43,7 +43,7 @@ export const createBudget = async (req: AuthRequest, res: Response): Promise<voi
       category,
       limit,
       period,
-      userId: req.user!.id,
+      userId: req.user.id,
     },
   });
 
@@ -55,7 +55,7 @@ export const deleteBudget = async (req: AuthRequest, res: Response): Promise<voi
   const existing = await prisma.budget.findFirst({
     where: {
       id,
-      userId: req.user!.id,
+      userId: req.user.id,
     },
   });
   if (!existing) {
