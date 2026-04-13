@@ -3,6 +3,7 @@ import expenseRoutes from "./routes/expenseRoutes";
 import authRoutes from "./routes/authRoutes";
 import budgetRoutes from "./routes/budgetRoutes";
 import { notFoundHandler, errorHandler } from "./middleware/errorHandler";
+import { requireAuth } from "./middleware/requireAuth";
 
 
 const app = express();
@@ -17,8 +18,8 @@ app.get('/health', (_req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
-app.use("/api/expenses", expenseRoutes);
-app.use("/api/budgets", budgetRoutes);
+app.use("/api/expenses", requireAuth, expenseRoutes);
+app.use("/api/budgets", requireAuth,  budgetRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
