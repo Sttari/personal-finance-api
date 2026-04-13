@@ -14,7 +14,7 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction): vo
     const authHeader = req.headers.authorization;
     // If not, return 401 Unauthorized
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        res.status(401).json({ message: "Unauthorized" });
+        res.status(401).json({ message: "Missing or invalid Authorization header." });
         return;
     }
 
@@ -25,6 +25,6 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction): vo
         req.user = { id: payload.id, email: payload.email };
         next();
     } catch (err) {
-        res.status(401).json({ message: "Unauthorized" });
+        res.status(401).json({ message: "Invalid or expired token." });
     } 
 };
