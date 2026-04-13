@@ -2,8 +2,8 @@ import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import prisma from "../db";
+import { config } from "../config";
 
-const JWT_SECRET = process.env.JWT_SECRET as string;
 const TOKEN_EXPIRY = "24h";
 
 export const register = async (req: Request, res: Response): Promise<void> => {
@@ -16,24 +16,23 @@ export const register = async (req: Request, res: Response): Promise<void> => {
   }
 
   const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(password, salt);
+  const passwordHash = await bcrypt.hash(password, salt);
 
   const newUser = await prisma.user.create({
-    data: {
-      email,
-      password: hashedPassword,
-      name,
-    },
+    data: { email, passwordHash, name },
+    select: { id: true, email: true, name: true, createdAt: true },
   });
 
-  const token = jwt.sign({ id: newUser.id, email: newUser.email }, JWT_SECRET, {
-    expiresIn: TOKEN_EXPIRY,
-  });
+  const token = jwt.sign(
+    { id: newUser.id, email: newUser.email },
+    config.jwtSecret,
+    { expiresIn: TOKEN_EXPIRY }
+  );
 
   res.status(201).json({
     message: "User registered successfully",
     token,
-    user: { id: newUser.id, email: newUser.email, name: newUser.name },
+    user: newUser,
   });
 };
 
@@ -41,21 +40,22 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   const { email, password } = req.body;
 
   const user = await prisma.user.findUnique({ where: { email } });
-  
   if (!user) {
     res.status(401).json({ error: "Invalid email or password" });
     return;
   }
 
-  const isMatch = await bcrypt.compare(password, user.password);
+  const isMatch = await bcrypt.compare(password, user.passwordHash);
   if (!isMatch) {
     res.status(401).json({ error: "Invalid email or password" });
     return;
   }
 
-  const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, {
-    expiresIn: TOKEN_EXPIRY,
-  });
+  const token = jwt.sign(
+    { id: user.id, email: user.email },
+    config.jwtSecret,
+    { expiresIn: TOKEN_EXPIRY }
+  );
 
   res.json({
     message: "Login successful",
