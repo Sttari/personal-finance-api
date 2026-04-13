@@ -6,11 +6,11 @@ import {
 } from "../controllers/budgetController";
 import { validate } from "../middleware/validate";
 import { createBudgetSchema } from "../types/budget";
-import { authenticate } from "../middleware/auth";
+import { requireAuth  } from "../middleware/requireAuth";
 
 const router = Router();
 
-router.use(authenticate);
+router.use(requireAuth);
 
 router.get("/", getAllBudgets);
 router.post("/", validate(createBudgetSchema), createBudget);

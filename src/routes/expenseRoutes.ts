@@ -8,11 +8,11 @@ import {
 } from "../controllers/expenseController";
 import { validate } from "../middleware/validate";
 import { createExpenseSchema, updateExpenseSchema } from "../types/expense";
-import { authenticate } from "../middleware/auth";
+import { requireAuth } from "../middleware/requireAuth";
 
 const router = Router();
 
-router.use(authenticate);
+router.use(requireAuth);
 
 router.get("/", getAllExpenses);
 router.get("/:id", getExpenseById);

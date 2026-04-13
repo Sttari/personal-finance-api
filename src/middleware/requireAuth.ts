@@ -2,6 +2,11 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { config } from "../config";
 
+//  Define an interface for the authenticated request, extending the Express Request
+export interface AuthRequest extends Request {
+  user?: { id: string; email: string };
+}
+
 // Define the shape of the JWT payload
 interface JwtPayload {
     id: string;
@@ -22,7 +27,7 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction): vo
     const token = authHeader.slice(7); // Remove "Bearer " prefix
     try {
         const payload = jwt.verify(token, config.jwtSecret) as JwtPayload;
-        req.user = { id: payload.id, email: payload.email };
+        (req as AuthRequest).user = { id: payload.id, email: payload.email };
         next();
     } catch (err) {
         res.status(401).json({ message: "Invalid or expired token." });
