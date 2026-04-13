@@ -9,15 +9,16 @@ import {
 import { validate } from "../middleware/validate";
 import { createExpenseSchema, updateExpenseSchema } from "../types/expense";
 import { requireAuth } from "../middleware/requireAuth";
+import { auth } from "../utils/authHandler";
 
 const router = Router();
 
 router.use(requireAuth);
 
-router.get("/", getAllExpenses);
-router.get("/:id", getExpenseById);
-router.post("/", validate(createExpenseSchema), createExpense);
-router.put("/:id", validate(updateExpenseSchema), updateExpense);
-router.delete("/:id", deleteExpense);
+router.get("/", auth(getAllExpenses));
+router.get("/:id", auth(getExpenseById));
+router.post("/", validate(createExpenseSchema), auth(createExpense));
+router.put("/:id", validate(updateExpenseSchema), auth(updateExpense));
+router.delete("/:id", auth(deleteExpense));
 
 export default router;
